@@ -1,4 +1,4 @@
-[![Test](https://img.shields.io/github/actions/workflow/status/FlowMCP/mcp-apps-validator/test-on-push.yml)]() ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+[![Test](https://img.shields.io/github/actions/workflow/status/agentprobe/mcp-apps-validator/test-on-push.yml)]() ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
 # mcp-apps-validator
 
@@ -7,7 +7,7 @@ Validates MCP servers for UI extension (SEP-1865) support: connects via Streamab
 ## Quickstart
 
 ```bash
-git clone https://github.com/FlowMCP/mcp-apps-validator.git
+git clone https://github.com/agentprobe/mcp-apps-validator.git
 cd mcp-apps-validator
 npm i
 ```
