@@ -36,7 +36,7 @@ there via a `github:agentprobe/mcp-apps-validator` pinned dependency.
 | Method | Signature | Returns |
 |--------|-----------|---------|
 | `start` | `{ endpoint, timeout = 10000 }` | `{ status, findings, categories, entries }` |
-| `compare` | `{ before, after }` | `{ status, messages, hasChanges, diff }` |
+| `compare` | `{ before, after }` | `{ status, findings, hasChanges, diff }` |
 
 This is the same unified shape every AgentProbe leaf validator exposes to the assessment engine
 (see `mcp-server-assessment/NOTES-validator-interface.md`).

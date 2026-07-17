@@ -240,9 +240,9 @@ describe( 'McpAppsValidator.compare', () => {
             const after = makeSnapshot()
             after['entries']['endpoint'] = 'https://other-server.example.com/mcp'
 
-            const { messages } = McpAppsValidator.compare( { before, after } )
+            const { findings } = McpAppsValidator.compare( { before, after } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'CMP-001' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'CMP-001', severity: 'warning', location: 'compare' } ) )
         } )
 
 
@@ -252,9 +252,9 @@ describe( 'McpAppsValidator.compare', () => {
 
             const after = makeSnapshot()
 
-            const { messages } = McpAppsValidator.compare( { before, after } )
+            const { findings } = McpAppsValidator.compare( { before, after } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'CMP-002' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'CMP-002', severity: 'warning', location: 'compare' } ) )
         } )
 
 
@@ -265,9 +265,9 @@ describe( 'McpAppsValidator.compare', () => {
             const after = makeSnapshot()
             after['entries']['timestamp'] = '2026-02-07T10:00:00.000Z'
 
-            const { messages } = McpAppsValidator.compare( { before, after } )
+            const { findings } = McpAppsValidator.compare( { before, after } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'CMP-003' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'CMP-003', severity: 'warning', location: 'compare' } ) )
         } )
     } )
 

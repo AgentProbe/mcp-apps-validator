@@ -131,7 +131,7 @@ import { McpAppsValidator } from 'mcp-apps-validator'
 const before = await McpAppsValidator.start( { endpoint: 'https://server.example.com/mcp' } )
 const after = await McpAppsValidator.start( { endpoint: 'https://server.example.com/mcp' } )
 
-const { status, messages, hasChanges, diff } = McpAppsValidator.compare( { before, after } )
+const { status, findings, hasChanges, diff } = McpAppsValidator.compare( { before, after } )
 
 console.log( `Changes detected: ${hasChanges}` )
 console.log( `UI resources added: ${diff['uiResources']['added'].length}` )
@@ -141,13 +141,13 @@ console.log( `UI resources removed: ${diff['uiResources']['removed'].length}` )
 **Returns**
 
 ```javascript
-{ status, messages, hasChanges, diff }
+{ status, findings, hasChanges, diff }
 ```
 
 | Key | Type | Description |
 |-----|------|-------------|
 | status | boolean | `true` when comparison completed |
-| messages | array of strings | Integrity warnings (URL mismatch, timestamp issues) |
+| findings | array of objects | `CMP-*` integrity findings `{ code, severity, location, message }` (URL mismatch, timestamp issues) |
 | hasChanges | boolean | `true` when any diff section has changes |
 | diff | object | Structured diff with sections: `server`, `uiResources`, `uiLinkedTools`, `csp`, `permissions`, `latency`, `categories` |
 
@@ -263,14 +263,15 @@ bands; the generic `VAL` / `CON` prefixes are de-collided across the fleet by di
 
 ### CMP — Comparison
 
-`compare()` still emits the legacy `CMP-*` string form via its `messages` array; its migration to
-structured findings is tracked separately (PRD-011).
+`compare()` emits `CMP-*` codes as structured finding objects
+`{ code, severity, location: 'compare', message }` on its `findings` array — uniform with `start()`.
+The `diff` and `hasChanges` are keyed structurally, never on the codes.
 
 | Code | Severity | Description |
 |------|----------|-------------|
-| CMP-001 | WARNING | Snapshots are from different servers |
-| CMP-002 | WARNING | Before snapshot has no timestamp |
-| CMP-003 | WARNING | After snapshot is older than before |
+| CMP-001 | warning | Snapshots are from different servers |
+| CMP-002 | warning | Before snapshot has no timestamp |
+| CMP-003 | warning | After snapshot is older than before |
 
 ## License
 

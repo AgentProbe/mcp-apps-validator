@@ -36,9 +36,9 @@ class McpAppsValidator {
         const { status: validationStatus, findings: validationFindings } = Validation.validationCompare( { before, after } )
         if( !validationStatus ) { Validation.error( { findings: validationFindings } ) }
 
-        const messages = []
+        const findings = []
 
-        McpAppsValidator.#checkSnapshotIntegrity( { before, after, messages } )
+        McpAppsValidator.#checkSnapshotIntegrity( { before, after, findings } )
 
         const { diff: serverDiff } = McpAppsValidator.#diffServer( { before: before['entries'], after: after['entries'] } )
         const { diff: uiResourcesDiff } = McpAppsValidator.#diffUiResources( { before: before['entries']['uiResources'] || [], after: after['entries']['uiResources'] || [] } )
@@ -62,7 +62,7 @@ class McpAppsValidator {
 
         const status = true
 
-        return { status, messages, hasChanges, diff }
+        return { status, findings, hasChanges, diff }
     }
 
 
@@ -99,23 +99,23 @@ class McpAppsValidator {
     }
 
 
-    static #checkSnapshotIntegrity( { before, after, messages } ) {
+    static #checkSnapshotIntegrity( { before, after, findings } ) {
         const beforeUrl = before['entries']['endpoint']
         const afterUrl = after['entries']['endpoint']
 
         if( beforeUrl !== afterUrl ) {
-            messages.push( 'CMP-001 compare: Snapshots are from different servers' )
+            findings.push( { code: 'CMP-001', severity: 'warning', location: 'compare', message: 'Snapshots are from different servers' } )
         }
 
         const beforeTimestamp = before['entries']['timestamp']
         const afterTimestamp = after['entries']['timestamp']
 
         if( !beforeTimestamp ) {
-            messages.push( 'CMP-002 compare: Before snapshot has no timestamp' )
+            findings.push( { code: 'CMP-002', severity: 'warning', location: 'compare', message: 'Before snapshot has no timestamp' } )
         }
 
         if( beforeTimestamp && afterTimestamp && afterTimestamp < beforeTimestamp ) {
-            messages.push( 'CMP-003 compare: After snapshot is older than before' )
+            findings.push( { code: 'CMP-003', severity: 'warning', location: 'compare', message: 'After snapshot is older than before' } )
         }
     }
 
