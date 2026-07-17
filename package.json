@@ -1,6 +1,6 @@
 {
     "name": "mcp-apps-validator",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Validates MCP servers for UI extension support: connects, discovers ui:// resources, validates HTML, CSP, permissions, display modes, theming, tool linkage, and builds structured snapshots.",
     "main": "./src/index.mjs",
     "type": "module",

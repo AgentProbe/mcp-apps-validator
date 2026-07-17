@@ -45,7 +45,7 @@ const MOCK_VALIDATED_RESOURCES_MINIMAL = [
 describe( 'CapabilityClassifier', () => {
 
     test( 'classifies full capabilities correctly', () => {
-        const { categories, messages } = CapabilityClassifier.classify( {
+        const { categories, findings } = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES_WITH_UI,
             uiResources: MOCK_UI_RESOURCES,
             uiLinkedTools: MOCK_UI_LINKED_TOOLS,
@@ -62,12 +62,12 @@ describe( 'CapabilityClassifier', () => {
         expect( categories['hasToolVisibility'] ).toBe( true )
         expect( categories['hasValidPermissions'] ).toBe( true )
         expect( categories['hasGracefulDegradation'] ).toBe( true )
-        expect( messages ).toHaveLength( 0 )
+        expect( findings ).toHaveLength( 0 )
     } )
 
 
     test( 'classifies empty capabilities correctly', () => {
-        const { categories, messages } = CapabilityClassifier.classify( {
+        const { categories, findings } = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES,
             uiResources: [],
             uiLinkedTools: [],
@@ -82,7 +82,7 @@ describe( 'CapabilityClassifier', () => {
         expect( categories['supportsTheming'] ).toBe( false )
         expect( categories['supportsDisplayModes'] ).toBe( false )
         expect( categories['hasGracefulDegradation'] ).toBe( false )
-        expect( messages ).toContainEqual( expect.stringContaining( 'UIV-080' ) )
+        expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-080', severity: 'info' } ) )
     } )
 
 
@@ -147,31 +147,31 @@ describe( 'CapabilityClassifier', () => {
 
 
     test( 'returns UIV-080 when extension is missing', () => {
-        const { messages } = CapabilityClassifier.classify( {
+        const { findings } = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES,
             uiResources: [],
             uiLinkedTools: [],
             validatedResources: []
         } )
 
-        const uiv080 = messages
-            .filter( ( m ) => m.includes( 'UIV-080' ) )
+        const uiv080 = findings
+            .filter( ( f ) => f['code'] === 'UIV-080' )
 
         expect( uiv080 ).toHaveLength( 1 )
-        expect( uiv080[0] ).toContain( 'MCP Apps extension not declared' )
+        expect( uiv080[0]['message'] ).toContain( 'MCP Apps extension not declared' )
     } )
 
 
     test( 'does not return UIV-080 when extension is present', () => {
-        const { messages } = CapabilityClassifier.classify( {
+        const { findings } = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES_WITH_UI,
             uiResources: [],
             uiLinkedTools: [],
             validatedResources: []
         } )
 
-        const uiv080 = messages
-            .filter( ( m ) => m.includes( 'UIV-080' ) )
+        const uiv080 = findings
+            .filter( ( f ) => f['code'] === 'UIV-080' )
 
         expect( uiv080 ).toHaveLength( 0 )
     } )
@@ -184,52 +184,52 @@ describe( 'CapabilityClassifier', () => {
             'io.modelcontextprotocol/ui': {}
         }
 
-        const { messages } = CapabilityClassifier.classify( {
+        const { findings } = CapabilityClassifier.classify( {
             capabilities: capabilitiesNoVersion,
             uiResources: [],
             uiLinkedTools: [],
             validatedResources: []
         } )
 
-        const uiv081 = messages
-            .filter( ( m ) => m.includes( 'UIV-081' ) )
+        const uiv081 = findings
+            .filter( ( f ) => f['code'] === 'UIV-081' )
 
         expect( uiv081 ).toHaveLength( 1 )
-        expect( uiv081[0] ).toContain( 'Extension version not specified' )
+        expect( uiv081[0]['message'] ).toContain( 'Extension version not specified' )
     } )
 
 
     test( 'does not return UIV-081 when extension has version', () => {
-        const { messages } = CapabilityClassifier.classify( {
+        const { findings } = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES_WITH_UI,
             uiResources: [],
             uiLinkedTools: [],
             validatedResources: []
         } )
 
-        const uiv081 = messages
-            .filter( ( m ) => m.includes( 'UIV-081' ) )
+        const uiv081 = findings
+            .filter( ( f ) => f['code'] === 'UIV-081' )
 
         expect( uiv081 ).toHaveLength( 0 )
     } )
 
 
     test( 'does not return UIV-081 when extension is not present', () => {
-        const { messages } = CapabilityClassifier.classify( {
+        const { findings } = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES,
             uiResources: [],
             uiLinkedTools: [],
             validatedResources: []
         } )
 
-        const uiv081 = messages
-            .filter( ( m ) => m.includes( 'UIV-081' ) )
+        const uiv081 = findings
+            .filter( ( f ) => f['code'] === 'UIV-081' )
 
         expect( uiv081 ).toHaveLength( 0 )
     } )
 
 
-    test( 'returns messages array alongside categories', () => {
+    test( 'returns findings array alongside categories', () => {
         const result = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES,
             uiResources: [],
@@ -238,13 +238,13 @@ describe( 'CapabilityClassifier', () => {
         } )
 
         expect( result ).toHaveProperty( 'categories' )
-        expect( result ).toHaveProperty( 'messages' )
-        expect( Array.isArray( result['messages'] ) ).toBe( true )
+        expect( result ).toHaveProperty( 'findings' )
+        expect( Array.isArray( result['findings'] ) ).toBe( true )
     } )
 
 
     test( 'detects extension under experimental fallback', () => {
-        const { categories, messages } = CapabilityClassifier.classify( {
+        const { categories, findings } = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES_WITH_UI_EXPERIMENTAL,
             uiResources: [],
             uiLinkedTools: [],
@@ -253,30 +253,30 @@ describe( 'CapabilityClassifier', () => {
 
         expect( categories['supportsMcpApps'] ).toBe( true )
 
-        const uiv080 = messages
-            .filter( ( m ) => m.includes( 'UIV-080' ) )
+        const uiv080 = findings
+            .filter( ( f ) => f['code'] === 'UIV-080' )
 
         expect( uiv080 ).toHaveLength( 0 )
     } )
 
 
     test( 'extracts extension version from experimental fallback', () => {
-        const { messages } = CapabilityClassifier.classify( {
+        const { findings } = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES_WITH_UI_EXPERIMENTAL,
             uiResources: [],
             uiLinkedTools: [],
             validatedResources: []
         } )
 
-        const uiv081 = messages
-            .filter( ( m ) => m.includes( 'UIV-081' ) )
+        const uiv081 = findings
+            .filter( ( f ) => f['code'] === 'UIV-081' )
 
         expect( uiv081 ).toHaveLength( 0 )
     } )
 
 
     test( 'returns UIV-081 when experimental extension has no version', () => {
-        const { categories, messages } = CapabilityClassifier.classify( {
+        const { categories, findings } = CapabilityClassifier.classify( {
             capabilities: MOCK_CAPABILITIES_WITH_UI_EXPERIMENTAL_NO_VERSION,
             uiResources: [],
             uiLinkedTools: [],
@@ -285,10 +285,10 @@ describe( 'CapabilityClassifier', () => {
 
         expect( categories['supportsMcpApps'] ).toBe( true )
 
-        const uiv081 = messages
-            .filter( ( m ) => m.includes( 'UIV-081' ) )
+        const uiv081 = findings
+            .filter( ( f ) => f['code'] === 'UIV-081' )
 
         expect( uiv081 ).toHaveLength( 1 )
-        expect( uiv081[0] ).toContain( 'Extension version not specified' )
+        expect( uiv081[0]['message'] ).toContain( 'Extension version not specified' )
     } )
 } )

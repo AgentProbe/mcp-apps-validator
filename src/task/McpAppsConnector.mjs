@@ -7,39 +7,39 @@ class McpAppsConnector {
 
 
     static async connect( { endpoint, timeout } ) {
-        const messages = []
+        const findings = []
 
         const { reachable } = await McpAppsConnector.#checkReachable( { endpoint, timeout } )
 
         if( !reachable ) {
-            messages.push( 'CON-001 endpoint: Server is not reachable' )
+            findings.push( { code: 'CON-501', severity: 'error', location: 'endpoint', message: 'Server is not reachable' } )
 
-            return { status: false, messages, client: null, serverInfo: null }
+            return { status: false, findings, client: null, serverInfo: null }
         }
 
         const { client, serverInfo, error } = await McpAppsConnector.#initializeClient( { endpoint, timeout } )
 
         if( error ) {
-            messages.push( `CON-004 mcp: Initialize handshake failed — ${error}` )
+            findings.push( { code: 'CON-504', severity: 'error', location: 'mcp', message: `Initialize handshake failed — ${error}` } )
 
-            return { status: false, messages, client: null, serverInfo: null }
+            return { status: false, findings, client: null, serverInfo: null }
         }
 
-        return { status: true, messages, client, serverInfo }
+        return { status: true, findings, client, serverInfo }
     }
 
 
     static async discover( { client } ) {
-        const messages = []
+        const findings = []
 
-        const { tools } = await McpAppsConnector.#listTools( { client, messages } )
-        const { resources } = await McpAppsConnector.#listResources( { client, messages } )
+        const { tools } = await McpAppsConnector.#listTools( { client, findings } )
+        const { resources } = await McpAppsConnector.#listResources( { client, findings } )
 
         const capabilities = McpAppsConnector.#getCapabilities( { client } )
 
         const status = true
 
-        return { status, messages, tools, resources, capabilities }
+        return { status, findings, tools, resources, capabilities }
     }
 
 
@@ -189,7 +189,7 @@ class McpAppsConnector {
 
 
     static async #initializeClient( { endpoint, timeout } ) {
-        const clientInfo = { name: 'mcp-apps-validator', version: '0.1.0' }
+        const clientInfo = { name: 'mcp-apps-validator', version: '0.2.0' }
 
         const { client: streamClient, serverInfo: streamInfo, error: streamError } = await McpAppsConnector.#tryStreamableHttp( { endpoint, timeout, clientInfo } )
 
@@ -243,34 +243,34 @@ class McpAppsConnector {
     }
 
 
-    static async #listTools( { client, messages } ) {
+    static async #listTools( { client, findings } ) {
         try {
             const result = await client.listTools()
             const tools = result['tools'] || []
 
             if( !Array.isArray( tools ) ) {
-                messages.push( 'CON-008 tools/list: Invalid response format' )
+                findings.push( { code: 'CON-508', severity: 'warning', location: 'tools/list', message: 'Invalid response format' } )
 
                 return { tools: [] }
             }
 
             return { tools }
         } catch( _e ) {
-            messages.push( 'CON-008 tools/list: Request failed' )
+            findings.push( { code: 'CON-508', severity: 'warning', location: 'tools/list', message: 'Request failed' } )
 
             return { tools: [] }
         }
     }
 
 
-    static async #listResources( { client, messages } ) {
+    static async #listResources( { client, findings } ) {
         try {
             const result = await client.listResources()
             const resources = result['resources'] || []
 
             return { resources }
         } catch( _e ) {
-            messages.push( 'CON-010 resources/list: Request failed' )
+            findings.push( { code: 'CON-510', severity: 'warning', location: 'resources/list', message: 'Request failed' } )
 
             return { resources: [] }
         }

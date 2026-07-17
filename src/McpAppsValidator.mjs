@@ -9,32 +9,32 @@ class McpAppsValidator {
 
 
     static async start( { endpoint, timeout = 10000 } ) {
-        const { status: validationStatus, messages: validationMessages } = Validation.validationStart( { endpoint, timeout } )
-        if( !validationStatus ) { Validation.error( { messages: validationMessages } ) }
+        const { status: validationStatus, findings: validationFindings } = Validation.validationStart( { endpoint, timeout } )
+        if( !validationStatus ) { Validation.error( { findings: validationFindings } ) }
 
-        const { status: connectStatus, messages: connectMessages, client, serverInfo } = await McpAppsConnector.connect( { endpoint, timeout } )
+        const { status: connectStatus, findings: connectFindings, client, serverInfo } = await McpAppsConnector.connect( { endpoint, timeout } )
 
         if( !connectStatus ) {
             const { categories, entries } = SnapshotBuilder.buildEmpty( { endpoint } )
-            const messages = [ ...connectMessages ]
+            const findings = [ ...connectFindings ]
 
-            return { status: false, messages, categories, entries }
+            return { status: false, findings, categories, entries }
         }
 
-        const { messages, categories, entries } = await McpAppsValidator.#runPipeline( { endpoint, client, serverInfo, timeout } )
+        const { findings, categories, entries } = await McpAppsValidator.#runPipeline( { endpoint, client, serverInfo, timeout } )
 
         await McpAppsConnector.disconnect( { client } )
 
-        const allMessages = [ ...connectMessages, ...messages ]
-        const status = allMessages.length === 0
+        const allFindings = [ ...connectFindings, ...findings ]
+        const status = allFindings.length === 0
 
-        return { status, messages: allMessages, categories, entries }
+        return { status, findings: allFindings, categories, entries }
     }
 
 
     static compare( { before, after } ) {
-        const { status: validationStatus, messages: validationMessages } = Validation.validationCompare( { before, after } )
-        if( !validationStatus ) { Validation.error( { messages: validationMessages } ) }
+        const { status: validationStatus, findings: validationFindings } = Validation.validationCompare( { before, after } )
+        if( !validationStatus ) { Validation.error( { findings: validationFindings } ) }
 
         const messages = []
 
@@ -67,18 +67,18 @@ class McpAppsValidator {
 
 
     static async #runPipeline( { endpoint, client, serverInfo, timeout } ) {
-        const allMessages = []
+        const allFindings = []
 
-        const { messages: discoverMessages, tools, resources, capabilities } = await McpAppsConnector.discover( { client } )
-        allMessages.push( ...discoverMessages )
+        const { findings: discoverFindings, tools, resources, capabilities } = await McpAppsConnector.discover( { client } )
+        allFindings.push( ...discoverFindings )
 
         const { uiResources, uiLinkedTools } = McpAppsConnector.discoverUiResources( { resources, tools } )
 
-        const { messages: validateMessages, validatedResources } = await UiResourceValidator.validate( { client, uiResources, tools, timeout } )
-        allMessages.push( ...validateMessages )
+        const { findings: validateFindings, validatedResources } = await UiResourceValidator.validate( { client, uiResources, tools, timeout } )
+        allFindings.push( ...validateFindings )
 
-        const { categories: partialCategories, messages: classifierMessages } = CapabilityClassifier.classify( { capabilities, uiResources, uiLinkedTools, validatedResources } )
-        allMessages.push( ...classifierMessages )
+        const { categories: partialCategories, findings: classifierFindings } = CapabilityClassifier.classify( { capabilities, uiResources, uiLinkedTools, validatedResources } )
+        allFindings.push( ...classifierFindings )
 
         const { latency } = await McpAppsConnector.measureLatency( { client, uiResources } )
 
@@ -95,7 +95,7 @@ class McpAppsValidator {
             latency
         } )
 
-        return { messages: allMessages, categories, entries }
+        return { findings: allFindings, categories, entries }
     }
 
 

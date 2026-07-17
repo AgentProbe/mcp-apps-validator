@@ -2,18 +2,18 @@ class CapabilityClassifier {
 
 
     static classify( { capabilities, uiResources, uiLinkedTools, validatedResources } ) {
-        const messages = []
+        const findings = []
 
         const { detected: supportsMcpApps } = CapabilityClassifier.#detectExtension( { capabilities } )
 
         if( !supportsMcpApps ) {
-            messages.push( 'UIV-080 capabilities: MCP Apps extension not declared (missing io.modelcontextprotocol/ui)' )
+            findings.push( { code: 'UIV-080', severity: 'info', location: 'capabilities', message: 'MCP Apps extension not declared (missing io.modelcontextprotocol/ui)' } )
         }
 
         const { extensionVersion } = CapabilityClassifier.#extractExtensionVersion( { capabilities } )
 
         if( supportsMcpApps && !extensionVersion ) {
-            messages.push( 'UIV-081 capabilities: Extension version not specified' )
+            findings.push( { code: 'UIV-081', severity: 'info', location: 'capabilities', message: 'Extension version not specified' } )
         }
 
         const { hasItems: hasUiResources } = CapabilityClassifier.#hasNonEmpty( { items: uiResources } )
@@ -24,7 +24,7 @@ class CapabilityClassifier {
         const { hasValid: supportsTheming } = CapabilityClassifier.#anyHasTheming( { validatedResources } )
         const { hasValid: supportsDisplayModes } = CapabilityClassifier.#anyHasDisplayModes( { validatedResources } )
         const { hasValid: hasToolVisibility } = CapabilityClassifier.#anyHasVisibility( { uiLinkedTools } )
-        const { hasValid: hasValidPermissions } = CapabilityClassifier.#allHaveValidPermissions( { validatedResources, messages: [] } )
+        const { hasValid: hasValidPermissions } = CapabilityClassifier.#allHaveValidPermissions( { validatedResources, findings: [] } )
         const { hasValid: hasGracefulDegradation } = CapabilityClassifier.#anyHasGracefulDegradation( { validatedResources } )
 
         const categories = {
@@ -40,7 +40,7 @@ class CapabilityClassifier {
             hasGracefulDegradation
         }
 
-        return { categories, messages }
+        return { categories, findings }
     }
 
 
@@ -129,13 +129,13 @@ class CapabilityClassifier {
     }
 
 
-    static #allHaveValidPermissions( { validatedResources, messages } ) {
+    static #allHaveValidPermissions( { validatedResources, findings } ) {
         if( validatedResources.length === 0 ) {
             return { hasValid: false }
         }
 
-        const hasUnknown = messages
-            .some( ( m ) => m.includes( 'UIV-030' ) )
+        const hasUnknown = findings
+            .some( ( finding ) => finding['code'] === 'UIV-030' )
 
         const hasValid = !hasUnknown
 

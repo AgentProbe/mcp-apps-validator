@@ -12,7 +12,7 @@ class UiResourceValidator {
 
 
     static async validate( { client, uiResources, tools, timeout } ) {
-        const messages = []
+        const findings = []
         const validatedResources = []
 
         const uiLinkedTools = tools
@@ -33,16 +33,16 @@ class UiResourceValidator {
                 return { name, resourceUri, visibility }
             } )
 
-        await UiResourceValidator.#processResources( { client, uiResources, messages, validatedResources } )
+        await UiResourceValidator.#processResources( { client, uiResources, findings, validatedResources } )
 
-        UiResourceValidator.#validateToolLinkage( { uiLinkedTools, uiResources, messages } )
-        UiResourceValidator.#validateToolUiMeta( { tools, messages } )
+        UiResourceValidator.#validateToolLinkage( { uiLinkedTools, uiResources, findings } )
+        UiResourceValidator.#validateToolUiMeta( { tools, findings } )
 
-        return { messages, validatedResources }
+        return { findings, validatedResources }
     }
 
 
-    static async #processResources( { client, uiResources, messages, validatedResources } ) {
+    static async #processResources( { client, uiResources, findings, validatedResources } ) {
         const resourcePromises = uiResources
             .map( async ( resource ) => {
                 const uri = resource['uri']
@@ -50,13 +50,13 @@ class UiResourceValidator {
                 const { status, content, mimeType, meta } = await McpAppsConnector.readUiResource( { client, uri } )
 
                 if( !status ) {
-                    messages.push( `UIR-001 resources/read ${uri}: Resource read failed` )
+                    findings.push( { code: 'UIR-001', severity: 'warning', location: `resources/read ${uri}`, message: 'Resource read failed' } )
 
                     return
                 }
 
                 if( mimeType !== 'text/html;profile=mcp-app' && mimeType !== 'text/html' ) {
-                    messages.push( `UIR-002 resources/read ${uri}: Expected text/html content, got "${mimeType}"` )
+                    findings.push( { code: 'UIR-002', severity: 'warning', location: `resources/read ${uri}`, message: `Expected text/html content, got "${mimeType}"` } )
 
                     return
                 }
@@ -74,12 +74,12 @@ class UiResourceValidator {
                     hasGracefulDegradation: false
                 }
 
-                UiResourceValidator.#validateHtmlContent( { uri, content, messages } )
-                UiResourceValidator.#validateCsp( { uri, uiMeta, messages, validated } )
-                UiResourceValidator.#validatePermissions( { uri, uiMeta, messages, validated } )
-                UiResourceValidator.#validateDisplayMode( { uri, uiMeta, messages, validated } )
-                UiResourceValidator.#validateThemeSupport( { uri, content, messages, validated } )
-                UiResourceValidator.#validateGracefulDegradation( { uri, content, messages, validated } )
+                UiResourceValidator.#validateHtmlContent( { uri, content, findings } )
+                UiResourceValidator.#validateCsp( { uri, uiMeta, findings, validated } )
+                UiResourceValidator.#validatePermissions( { uri, uiMeta, findings, validated } )
+                UiResourceValidator.#validateDisplayMode( { uri, uiMeta, findings, validated } )
+                UiResourceValidator.#validateThemeSupport( { uri, content, findings, validated } )
+                UiResourceValidator.#validateGracefulDegradation( { uri, content, findings, validated } )
 
                 validatedResources.push( validated )
             } )
@@ -88,21 +88,21 @@ class UiResourceValidator {
     }
 
 
-    static #validateHtmlContent( { uri, content, messages } ) {
+    static #validateHtmlContent( { uri, content, findings } ) {
         if( content === null || content === undefined ) {
-            messages.push( `UIV-010 ${uri}: HTML content is missing` )
+            findings.push( { code: 'UIV-010', severity: 'warning', location: uri, message: 'HTML content is missing' } )
 
             return
         }
 
         if( typeof content !== 'string' ) {
-            messages.push( `UIV-011 ${uri}: HTML content is not a string` )
+            findings.push( { code: 'UIV-011', severity: 'warning', location: uri, message: 'HTML content is not a string' } )
 
             return
         }
 
         if( content.trim() === '' ) {
-            messages.push( `UIV-012 ${uri}: HTML content is empty` )
+            findings.push( { code: 'UIV-012', severity: 'warning', location: uri, message: 'HTML content is empty' } )
 
             return
         }
@@ -113,14 +113,14 @@ class UiResourceValidator {
         const hasBodyTag = lowerContent.includes( '<body' )
 
         if( !hasDoctype && !hasHtmlTag && !hasBodyTag ) {
-            messages.push( `UIV-013 ${uri}: HTML content appears invalid (missing doctype, html, or body tag)` )
+            findings.push( { code: 'UIV-013', severity: 'warning', location: uri, message: 'HTML content appears invalid (missing doctype, html, or body tag)' } )
         }
     }
 
 
-    static #validateCsp( { uri, uiMeta, messages, validated } ) {
+    static #validateCsp( { uri, uiMeta, findings, validated } ) {
         if( !uiMeta || !uiMeta['csp'] ) {
-            messages.push( `UIV-020 ${uri}: No CSP configuration declared` )
+            findings.push( { code: 'UIV-020', severity: 'warning', location: uri, message: 'No CSP configuration declared' } )
 
             return
         }
@@ -137,7 +137,7 @@ class UiResourceValidator {
         allDomains
             .forEach( ( domain ) => {
                 if( !domain.startsWith( 'https://' ) && !domain.startsWith( 'wss://' ) && domain !== 'self' ) {
-                    messages.push( `UIV-021 ${uri}: CSP domain "${domain}" should use https:// or wss://` )
+                    findings.push( { code: 'UIV-021', severity: 'warning', location: uri, message: `CSP domain "${domain}" should use https:// or wss://` } )
                 }
             } )
 
@@ -145,12 +145,12 @@ class UiResourceValidator {
             .some( ( domain ) => domain === '*' || domain === 'https://*' )
 
         if( hasWildcard ) {
-            messages.push( `UIV-022 ${uri}: CSP contains wildcard domain — allows unrestricted access` )
+            findings.push( { code: 'UIV-022', severity: 'warning', location: uri, message: 'CSP contains wildcard domain — allows unrestricted access' } )
         }
     }
 
 
-    static #validatePermissions( { uri, uiMeta, messages, validated } ) {
+    static #validatePermissions( { uri, uiMeta, findings, validated } ) {
         if( !uiMeta || !uiMeta['permissions'] ) {
             return
         }
@@ -164,21 +164,21 @@ class UiResourceValidator {
             .filter( ( key ) => !KNOWN_PERMISSIONS.includes( key ) )
 
         if( unknownPermissions.length > 0 ) {
-            messages.push( `UIV-030 ${uri}: Unknown permissions declared: ${unknownPermissions.join( ', ' )}` )
+            findings.push( { code: 'UIV-030', severity: 'warning', location: uri, message: `Unknown permissions declared: ${unknownPermissions.join( ', ' )}` } )
         }
 
         const sensitiveUsed = declaredKeys
             .filter( ( key ) => SENSITIVE_PERMISSIONS.includes( key ) )
 
         if( sensitiveUsed.length > 0 ) {
-            messages.push( `UIV-031 ${uri}: Sensitive permissions requested: ${sensitiveUsed.join( ', ' )}` )
+            findings.push( { code: 'UIV-031', severity: 'warning', location: uri, message: `Sensitive permissions requested: ${sensitiveUsed.join( ', ' )}` } )
         }
     }
 
 
-    static #validateDisplayMode( { uri, uiMeta, messages, validated } ) {
+    static #validateDisplayMode( { uri, uiMeta, findings, validated } ) {
         if( !uiMeta || !uiMeta['displayModes'] ) {
-            messages.push( `UIV-041 ${uri}: No display modes declared` )
+            findings.push( { code: 'UIV-041', severity: 'info', location: uri, message: 'No display modes declared' } )
 
             return
         }
@@ -186,7 +186,7 @@ class UiResourceValidator {
         const displayModes = uiMeta['displayModes']
 
         if( !Array.isArray( displayModes ) || displayModes.length === 0 ) {
-            messages.push( `UIV-041 ${uri}: No display modes declared` )
+            findings.push( { code: 'UIV-041', severity: 'info', location: uri, message: 'No display modes declared' } )
 
             return
         }
@@ -197,12 +197,12 @@ class UiResourceValidator {
             .filter( ( mode ) => !KNOWN_DISPLAY_MODES.includes( mode ) )
 
         if( unknownModes.length > 0 ) {
-            messages.push( `UIV-040 ${uri}: Unknown display modes: ${unknownModes.join( ', ' )}` )
+            findings.push( { code: 'UIV-040', severity: 'info', location: uri, message: `Unknown display modes: ${unknownModes.join( ', ' )}` } )
         }
     }
 
 
-    static #validateThemeSupport( { uri, content, messages, validated } ) {
+    static #validateThemeSupport( { uri, content, findings, validated } ) {
         if( !content || typeof content !== 'string' ) {
             return
         }
@@ -218,12 +218,12 @@ class UiResourceValidator {
         if( acknowledged ) {
             validated['hasTheming'] = true
         } else {
-            messages.push( `UIV-050 ${uri}: No theming acknowledgment found (no color-scheme, CSS variables, or data-theme)` )
+            findings.push( { code: 'UIV-050', severity: 'info', location: uri, message: 'No theming acknowledgment found (no color-scheme, CSS variables, or data-theme)' } )
         }
     }
 
 
-    static #validateGracefulDegradation( { uri, content, messages, validated } ) {
+    static #validateGracefulDegradation( { uri, content, findings, validated } ) {
         if( !content || typeof content !== 'string' ) {
             return
         }
@@ -235,14 +235,14 @@ class UiResourceValidator {
         if( hasNoscript || hasTextContent ) {
             validated['hasGracefulDegradation'] = true
         } else {
-            messages.push( `UIV-070 ${uri}: No graceful degradation found (no <noscript> or text fallback)` )
+            findings.push( { code: 'UIV-070', severity: 'info', location: uri, message: 'No graceful degradation found (no <noscript> or text fallback)' } )
         }
     }
 
 
-    static #validateToolLinkage( { uiLinkedTools, uiResources, messages } ) {
+    static #validateToolLinkage( { uiLinkedTools, uiResources, findings } ) {
         if( uiLinkedTools.length === 0 ) {
-            messages.push( 'UIV-062 tools: No tools linked to UI resources' )
+            findings.push( { code: 'UIV-062', severity: 'info', location: 'tools', message: 'No tools linked to UI resources' } )
 
             return
         }
@@ -255,7 +255,7 @@ class UiResourceValidator {
                 const { name, resourceUri, visibility } = tool
 
                 if( !uiUris.includes( resourceUri ) ) {
-                    messages.push( `UIV-060 tool ${name}: References non-existent UI resource "${resourceUri}"` )
+                    findings.push( { code: 'UIV-060', severity: 'warning', location: `tool ${name}`, message: `References non-existent UI resource "${resourceUri}"` } )
                 }
 
                 if( visibility && Array.isArray( visibility ) ) {
@@ -263,14 +263,14 @@ class UiResourceValidator {
                         .filter( ( v ) => v !== 'model' && v !== 'app' )
 
                     if( invalidVisibility.length > 0 ) {
-                        messages.push( `UIV-061 tool ${name}: Invalid visibility values: ${invalidVisibility.join( ', ' )}` )
+                        findings.push( { code: 'UIV-061', severity: 'warning', location: `tool ${name}`, message: `Invalid visibility values: ${invalidVisibility.join( ', ' )}` } )
                     }
                 }
             } )
     }
 
 
-    static #validateToolUiMeta( { tools, messages } ) {
+    static #validateToolUiMeta( { tools, findings } ) {
         tools
             .forEach( ( tool ) => {
                 const { name } = tool
@@ -283,7 +283,7 @@ class UiResourceValidator {
                 if( !ui ) { return }
 
                 if( ui['resourceUri'] === undefined || ui['resourceUri'] === null ) {
-                    messages.push( `UIV-063 ${name}: Has UI metadata but no resourceUri` )
+                    findings.push( { code: 'UIV-063', severity: 'info', location: name, message: 'Has UI metadata but no resourceUri' } )
                 }
             } )
     }

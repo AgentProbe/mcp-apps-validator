@@ -52,28 +52,28 @@ describe( 'McpAppsValidator.compare', () => {
         test( 'throws when before is missing', () => {
             expect( () => {
                 McpAppsValidator.compare( { after: makeSnapshot() } )
-            } ).toThrow( 'VAL-010' )
+            } ).toThrow( 'VAL-510' )
         } )
 
 
         test( 'throws when after is missing', () => {
             expect( () => {
                 McpAppsValidator.compare( { before: makeSnapshot() } )
-            } ).toThrow( 'VAL-013' )
+            } ).toThrow( 'VAL-513' )
         } )
 
 
         test( 'throws when before is not an object', () => {
             expect( () => {
                 McpAppsValidator.compare( { before: 'invalid', after: makeSnapshot() } )
-            } ).toThrow( 'VAL-011' )
+            } ).toThrow( 'VAL-511' )
         } )
 
 
         test( 'throws when before is missing categories', () => {
             expect( () => {
                 McpAppsValidator.compare( { before: { entries: {} }, after: makeSnapshot() } )
-            } ).toThrow( 'VAL-012' )
+            } ).toThrow( 'VAL-512' )
         } )
     } )
 

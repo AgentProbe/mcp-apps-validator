@@ -15,7 +15,7 @@ npm i
 ```javascript
 import { McpAppsValidator } from 'mcp-apps-validator'
 
-const { status, messages, categories, entries } = await McpAppsValidator.start( {
+const { status, findings, categories, entries } = await McpAppsValidator.start( {
     endpoint: 'https://your-mcp-server.example.com/mcp',
     timeout: 15000
 } )
@@ -82,7 +82,7 @@ Connects to an MCP server, discovers UI resources, validates HTML content, CSP, 
 ```javascript
 import { McpAppsValidator } from 'mcp-apps-validator'
 
-const { status, messages, categories, entries } = await McpAppsValidator.start( {
+const { status, findings, categories, entries } = await McpAppsValidator.start( {
     endpoint: 'https://your-mcp-server.example.com/mcp',
     timeout: 15000
 } )
@@ -96,13 +96,13 @@ console.log( `Extension: ${entries['extensionVersion']}` )
 **Returns**
 
 ```javascript
-{ status, messages, categories, entries }
+{ status, findings, categories, entries }
 ```
 
 | Key | Type | Description |
 |-----|------|-------------|
-| status | boolean | `true` when no messages were generated |
-| messages | array of strings | Warning and error messages with error codes |
+| status | boolean | `true` when no findings were generated |
+| findings | array of objects | Structured findings, each `{ code, severity, location, message }` (see [Validation Codes](#validation-codes)) |
 | categories | object | 12 boolean flags (see [Categories](#categories)) |
 | entries | object | 18 data fields (see [Entries](#entries)) |
 
@@ -198,64 +198,73 @@ console.log( `UI resources removed: ${diff['uiResources']['removed'].length}` )
 
 ## Validation Codes
 
-### VAL — Input Validation
+Each finding is a structured object `{ code, severity, location, message }` conforming to the
+AgentProbe finding-object spec (`spec/agentprobe/.../01-finding-object.md`). `severity` is lowercase
+(`error` / `warning` / `info`). This validator owns the `UIR`, `UIV`, `CON-5xx` and `VAL-5xx`
+bands; the generic `VAL` / `CON` prefixes are de-collided across the fleet by disjoint number bands
+(mcp-apps = `5xx`).
+
+### VAL — Input Validation (`VAL-5xx` band)
 
 | Code | Severity | Description |
 |------|----------|-------------|
-| VAL-001 | ERROR | endpoint: Missing value |
-| VAL-002 | ERROR | endpoint: Must be a string |
-| VAL-003 | ERROR | endpoint: Must not be empty |
-| VAL-004 | ERROR | endpoint: Must be a valid URL |
-| VAL-005 | ERROR | timeout: Must be a number |
-| VAL-006 | ERROR | timeout: Must be greater than 0 |
-| VAL-010 | ERROR | before: Missing value |
-| VAL-011 | ERROR | before: Must be an object |
-| VAL-012 | ERROR | before: Missing categories or entries |
-| VAL-013 | ERROR | after: Missing value |
-| VAL-014 | ERROR | after: Must be an object |
-| VAL-015 | ERROR | after: Missing categories or entries |
+| VAL-501 | error | endpoint: Missing value |
+| VAL-502 | error | endpoint: Must be a string |
+| VAL-503 | error | endpoint: Must not be empty |
+| VAL-504 | error | endpoint: Must be a valid URL |
+| VAL-505 | error | timeout: Must be a number |
+| VAL-506 | error | timeout: Must be greater than 0 |
+| VAL-510 | error | before: Missing value |
+| VAL-511 | error | before: Must be an object |
+| VAL-512 | error | before: Missing categories or entries |
+| VAL-513 | error | after: Missing value |
+| VAL-514 | error | after: Must be an object |
+| VAL-515 | error | after: Missing categories or entries |
 
-### CON — MCP Connection
+### CON — MCP Connection (`CON-5xx` band)
 
 | Code | Severity | Description |
 |------|----------|-------------|
-| CON-001 | ERROR | endpoint: Server is not reachable |
-| CON-004 | ERROR | mcp: Initialize handshake failed |
-| CON-008 | WARNING | tools/list: Request failed or invalid response format |
-| CON-010 | WARNING | resources/list: Request failed |
+| CON-501 | error | endpoint: Server is not reachable |
+| CON-504 | error | mcp: Initialize handshake failed |
+| CON-508 | warning | tools/list: Request failed or invalid response format |
+| CON-510 | warning | resources/list: Request failed |
 
 ### UIR — UI Resource Access
 
 | Code | Severity | Description |
 |------|----------|-------------|
-| UIR-001 | WARNING | resources/read: Resource read failed |
-| UIR-002 | WARNING | resources/read: Expected text/html content |
+| UIR-001 | warning | resources/read: Resource read failed |
+| UIR-002 | warning | resources/read: Expected text/html content |
 
 ### UIV — UI Validation
 
 | Code | Severity | Description |
 |------|----------|-------------|
-| UIV-010 | WARNING | HTML content is missing |
-| UIV-011 | WARNING | HTML content is not a string |
-| UIV-012 | WARNING | HTML content is empty |
-| UIV-013 | WARNING | HTML content appears invalid |
-| UIV-020 | WARNING | No CSP configuration declared |
-| UIV-021 | WARNING | CSP domain should use https:// or wss:// |
-| UIV-022 | WARNING | CSP contains wildcard domain |
-| UIV-030 | WARNING | Unknown permissions declared |
-| UIV-031 | WARNING | Sensitive permissions requested |
-| UIV-040 | INFO | Unknown display modes |
-| UIV-041 | INFO | No display modes declared |
-| UIV-050 | INFO | No theming acknowledgment found |
-| UIV-060 | WARNING | Tool references non-existent UI resource |
-| UIV-061 | WARNING | Tool has invalid visibility values |
-| UIV-062 | INFO | No tools linked to UI resources |
-| UIV-063 | INFO | Tool has UI metadata but no resourceUri |
-| UIV-070 | INFO | No graceful degradation found |
-| UIV-080 | INFO | MCP Apps extension not declared |
-| UIV-081 | INFO | Extension version not specified |
+| UIV-010 | warning | HTML content is missing |
+| UIV-011 | warning | HTML content is not a string |
+| UIV-012 | warning | HTML content is empty |
+| UIV-013 | warning | HTML content appears invalid |
+| UIV-020 | warning | No CSP configuration declared |
+| UIV-021 | warning | CSP domain should use https:// or wss:// |
+| UIV-022 | warning | CSP contains wildcard domain |
+| UIV-030 | warning | Unknown permissions declared |
+| UIV-031 | warning | Sensitive permissions requested |
+| UIV-040 | info | Unknown display modes |
+| UIV-041 | info | No display modes declared |
+| UIV-050 | info | No theming acknowledgment found |
+| UIV-060 | warning | Tool references non-existent UI resource |
+| UIV-061 | warning | Tool has invalid visibility values |
+| UIV-062 | info | No tools linked to UI resources |
+| UIV-063 | info | Tool has UI metadata but no resourceUri |
+| UIV-070 | info | No graceful degradation found |
+| UIV-080 | info | MCP Apps extension not declared |
+| UIV-081 | info | Extension version not specified |
 
 ### CMP — Comparison
+
+`compare()` still emits the legacy `CMP-*` string form via its `messages` array; its migration to
+structured findings is tracked separately (PRD-011).
 
 | Code | Severity | Description |
 |------|----------|-------------|

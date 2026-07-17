@@ -43,15 +43,15 @@ describe( 'UiResourceValidator', () => {
                 meta: MOCK_UI_RESOURCE_CONTENT['contents'][0]['_meta']
             } )
 
-            const { messages, validatedResources } = await UiResourceValidator.validate( {
+            const { findings, validatedResources } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            const htmlErrors = messages
-                .filter( ( m ) => m.includes( 'UIV-010' ) || m.includes( 'UIV-011' ) || m.includes( 'UIV-012' ) || m.includes( 'UIV-013' ) )
+            const htmlErrors = findings
+                .filter( ( f ) => [ 'UIV-010', 'UIV-011', 'UIV-012', 'UIV-013' ].includes( f['code'] ) )
 
             expect( htmlErrors ).toHaveLength( 0 )
             expect( validatedResources ).toHaveLength( 1 )
@@ -66,14 +66,14 @@ describe( 'UiResourceValidator', () => {
                 meta: null
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIR-001' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIR-001', severity: 'warning' } ) )
         } )
 
 
@@ -85,14 +85,14 @@ describe( 'UiResourceValidator', () => {
                 meta: null
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIR-002' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIR-002', severity: 'warning' } ) )
         } )
 
 
@@ -104,14 +104,14 @@ describe( 'UiResourceValidator', () => {
                 meta: null
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-012' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-012', severity: 'warning' } ) )
         } )
 
 
@@ -123,14 +123,14 @@ describe( 'UiResourceValidator', () => {
                 meta: null
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-013' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-013', severity: 'warning' } ) )
         } )
     } )
 
@@ -145,14 +145,14 @@ describe( 'UiResourceValidator', () => {
                 meta: null
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-020' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-020', severity: 'warning' } ) )
         } )
 
 
@@ -164,14 +164,14 @@ describe( 'UiResourceValidator', () => {
                 meta: MOCK_UI_RESOURCE_WITH_WILDCARD_CSP['contents'][0]['_meta']
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-022' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-022', severity: 'warning' } ) )
         } )
 
 
@@ -205,15 +205,14 @@ describe( 'UiResourceValidator', () => {
                 meta: MOCK_UI_RESOURCE_WITH_UNKNOWN_PERMISSION['contents'][0]['_meta']
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-030' ) )
-            expect( messages ).toContainEqual( expect.stringContaining( 'bluetooth' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-030', message: expect.stringContaining( 'bluetooth' ) } ) )
         } )
 
 
@@ -230,15 +229,14 @@ describe( 'UiResourceValidator', () => {
                 }
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-031' ) )
-            expect( messages ).toContainEqual( expect.stringContaining( 'camera' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-031', message: expect.stringContaining( 'camera' ) } ) )
         } )
 
 
@@ -272,14 +270,14 @@ describe( 'UiResourceValidator', () => {
                 meta: MOCK_UI_RESOURCE_CONTENT['contents'][0]['_meta']
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-050' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-050', severity: 'info' } ) )
         } )
 
 
@@ -313,14 +311,14 @@ describe( 'UiResourceValidator', () => {
                 meta: MOCK_UI_RESOURCE_CONTENT['contents'][0]['_meta']
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-070' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-070', severity: 'info' } ) )
         } )
 
 
@@ -366,14 +364,14 @@ describe( 'UiResourceValidator', () => {
                 }
             ]
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: brokenTools,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-060' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-060', severity: 'warning' } ) )
         } )
 
 
@@ -397,14 +395,14 @@ describe( 'UiResourceValidator', () => {
                 }
             ]
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: toolsWithBadVisibility,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-061' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-061', severity: 'warning' } ) )
         } )
 
 
@@ -416,15 +414,15 @@ describe( 'UiResourceValidator', () => {
                 meta: MOCK_UI_RESOURCE_CONTENT['contents'][0]['_meta']
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            const linkageErrors = messages
-                .filter( ( m ) => m.includes( 'UIV-060' ) || m.includes( 'UIV-061' ) )
+            const linkageErrors = findings
+                .filter( ( f ) => [ 'UIV-060', 'UIV-061' ].includes( f['code'] ) )
 
             expect( linkageErrors ).toHaveLength( 0 )
         } )
@@ -438,14 +436,14 @@ describe( 'UiResourceValidator', () => {
                 meta: MOCK_UI_RESOURCE_CONTENT['contents'][0]['_meta']
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS_NO_UI,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-062' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-062', severity: 'info' } ) )
         } )
 
 
@@ -468,15 +466,14 @@ describe( 'UiResourceValidator', () => {
                 }
             ]
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: toolsWithUiNoResourceUri,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-063' ) )
-            expect( messages ).toContainEqual( expect.stringContaining( 'incomplete_tool' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-063', location: expect.stringContaining( 'incomplete_tool' ) } ) )
         } )
     } )
 
@@ -495,14 +492,14 @@ describe( 'UiResourceValidator', () => {
                 }
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-041' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-041', severity: 'info' } ) )
         } )
 
 
@@ -519,14 +516,14 @@ describe( 'UiResourceValidator', () => {
                 }
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-041' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-041', severity: 'info' } ) )
         } )
 
 
@@ -543,15 +540,15 @@ describe( 'UiResourceValidator', () => {
                 }
             } )
 
-            const { messages } = await UiResourceValidator.validate( {
+            const { findings } = await UiResourceValidator.validate( {
                 client: {},
                 uiResources: UI_RESOURCES,
                 tools: MOCK_TOOLS,
                 timeout: 5000
             } )
 
-            const uiv041 = messages
-                .filter( ( m ) => m.includes( 'UIV-041' ) )
+            const uiv041 = findings
+                .filter( ( f ) => f['code'] === 'UIV-041' )
 
             expect( uiv041 ).toHaveLength( 0 )
         } )

@@ -87,37 +87,37 @@ describe( 'McpAppsValidator.start', () => {
     describe( 'Parameter Validation', () => {
 
         test( 'throws when endpoint is missing', async () => {
-            await expect( McpAppsValidator.start( {} ) ).rejects.toThrow( 'VAL-001' )
+            await expect( McpAppsValidator.start( {} ) ).rejects.toThrow( 'VAL-501' )
         } )
 
 
         test( 'throws when endpoint is not a string', async () => {
-            await expect( McpAppsValidator.start( { endpoint: 42 } ) ).rejects.toThrow( 'VAL-002' )
+            await expect( McpAppsValidator.start( { endpoint: 42 } ) ).rejects.toThrow( 'VAL-502' )
         } )
 
 
         test( 'throws when endpoint is empty', async () => {
-            await expect( McpAppsValidator.start( { endpoint: '  ' } ) ).rejects.toThrow( 'VAL-003' )
+            await expect( McpAppsValidator.start( { endpoint: '  ' } ) ).rejects.toThrow( 'VAL-503' )
         } )
 
 
         test( 'throws when endpoint is invalid URL', async () => {
-            await expect( McpAppsValidator.start( { endpoint: 'not-a-url' } ) ).rejects.toThrow( 'VAL-004' )
+            await expect( McpAppsValidator.start( { endpoint: 'not-a-url' } ) ).rejects.toThrow( 'VAL-504' )
         } )
 
 
         test( 'throws when timeout is not a number', async () => {
-            await expect( McpAppsValidator.start( { endpoint: TEST_ENDPOINT, timeout: 'fast' } ) ).rejects.toThrow( 'VAL-005' )
+            await expect( McpAppsValidator.start( { endpoint: TEST_ENDPOINT, timeout: 'fast' } ) ).rejects.toThrow( 'VAL-505' )
         } )
 
 
         test( 'throws when timeout is zero', async () => {
-            await expect( McpAppsValidator.start( { endpoint: TEST_ENDPOINT, timeout: 0 } ) ).rejects.toThrow( 'VAL-006' )
+            await expect( McpAppsValidator.start( { endpoint: TEST_ENDPOINT, timeout: 0 } ) ).rejects.toThrow( 'VAL-506' )
         } )
 
 
         test( 'throws when timeout is negative', async () => {
-            await expect( McpAppsValidator.start( { endpoint: TEST_ENDPOINT, timeout: -1 } ) ).rejects.toThrow( 'VAL-006' )
+            await expect( McpAppsValidator.start( { endpoint: TEST_ENDPOINT, timeout: -1 } ) ).rejects.toThrow( 'VAL-506' )
         } )
     } )
 
@@ -127,15 +127,15 @@ describe( 'McpAppsValidator.start', () => {
         test( 'returns empty categories when server is not reachable', async () => {
             mockConnector['connect'].mockResolvedValue( {
                 status: false,
-                messages: [ 'CON-001 endpoint: Server is not reachable' ],
+                findings: [ { code: 'CON-501', severity: 'error', location: 'endpoint', message: 'Server is not reachable' } ],
                 client: null,
                 serverInfo: null
             } )
 
-            const { status, messages, categories, entries } = await McpAppsValidator.start( { endpoint: TEST_ENDPOINT } )
+            const { status, findings, categories, entries } = await McpAppsValidator.start( { endpoint: TEST_ENDPOINT } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'CON-001' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'CON-501' } ) )
 
             EXPECTED_CATEGORY_KEYS
                 .forEach( ( key ) => {
@@ -154,14 +154,14 @@ describe( 'McpAppsValidator.start', () => {
         beforeEach( () => {
             mockConnector['connect'].mockResolvedValue( {
                 status: true,
-                messages: [],
+                findings: [],
                 client: mockClient,
                 serverInfo: MOCK_SERVER_INFO
             } )
 
             mockConnector['discover'].mockResolvedValue( {
                 status: true,
-                messages: [],
+                findings: [],
                 tools: MOCK_TOOLS,
                 resources: MOCK_RESOURCES,
                 capabilities: MOCK_CAPABILITIES_WITH_UI
@@ -180,7 +180,7 @@ describe( 'McpAppsValidator.start', () => {
             } )
 
             UiResourceValidator['validate'].mockResolvedValue( {
-                messages: [],
+                findings: [],
                 validatedResources: MOCK_VALIDATED_RESOURCES
             } )
 
@@ -269,28 +269,28 @@ describe( 'McpAppsValidator.start', () => {
         } )
 
 
-        test( 'returns status true when no messages', async () => {
-            const { status, messages } = await McpAppsValidator.start( { endpoint: TEST_ENDPOINT } )
+        test( 'returns status true when no findings', async () => {
+            const { status, findings } = await McpAppsValidator.start( { endpoint: TEST_ENDPOINT } )
 
             expect( status ).toBe( true )
-            expect( messages ).toHaveLength( 0 )
+            expect( findings ).toHaveLength( 0 )
         } )
     } )
 
 
-    describe( 'Pipeline with validation messages', () => {
+    describe( 'Pipeline with validation findings', () => {
 
         beforeEach( () => {
             mockConnector['connect'].mockResolvedValue( {
                 status: true,
-                messages: [],
+                findings: [],
                 client: mockClient,
                 serverInfo: MOCK_SERVER_INFO
             } )
 
             mockConnector['discover'].mockResolvedValue( {
                 status: true,
-                messages: [],
+                findings: [],
                 tools: MOCK_TOOLS,
                 resources: MOCK_RESOURCES,
                 capabilities: MOCK_CAPABILITIES_WITH_UI
@@ -311,16 +311,16 @@ describe( 'McpAppsValidator.start', () => {
         } )
 
 
-        test( 'returns status false when validation produces messages', async () => {
+        test( 'returns status false when validation produces findings', async () => {
             UiResourceValidator['validate'].mockResolvedValue( {
-                messages: [ 'UIV-020 ui://weather-dashboard: No CSP configuration declared' ],
+                findings: [ { code: 'UIV-020', severity: 'warning', location: 'ui://weather-dashboard', message: 'No CSP configuration declared' } ],
                 validatedResources: MOCK_VALIDATED_RESOURCES
             } )
 
-            const { status, messages } = await McpAppsValidator.start( { endpoint: TEST_ENDPOINT } )
+            const { status, findings } = await McpAppsValidator.start( { endpoint: TEST_ENDPOINT } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'UIV-020' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'UIV-020' } ) )
         } )
     } )
 } )

@@ -10,74 +10,81 @@ describe( 'Validation', () => {
     describe( 'validationStart', () => {
 
         test( 'returns error when endpoint is missing', () => {
-            const { status, messages } = Validation.validationStart( {} )
+            const { status, findings } = Validation.validationStart( {} )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-001' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-501', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when endpoint is not a string', () => {
-            const { status, messages } = Validation.validationStart( { endpoint: 42 } )
+            const { status, findings } = Validation.validationStart( { endpoint: 42 } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-002' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-502', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when endpoint is empty', () => {
-            const { status, messages } = Validation.validationStart( { endpoint: '  ' } )
+            const { status, findings } = Validation.validationStart( { endpoint: '  ' } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-003' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-503', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when endpoint is invalid URL', () => {
-            const { status, messages } = Validation.validationStart( { endpoint: 'not-a-url' } )
+            const { status, findings } = Validation.validationStart( { endpoint: 'not-a-url' } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-004' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-504', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when timeout is not a number', () => {
-            const { status, messages } = Validation.validationStart( { endpoint: TEST_ENDPOINT, timeout: 'fast' } )
+            const { status, findings } = Validation.validationStart( { endpoint: TEST_ENDPOINT, timeout: 'fast' } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-005' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-505', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when timeout is zero', () => {
-            const { status, messages } = Validation.validationStart( { endpoint: TEST_ENDPOINT, timeout: 0 } )
+            const { status, findings } = Validation.validationStart( { endpoint: TEST_ENDPOINT, timeout: 0 } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-006' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-506', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when timeout is negative', () => {
-            const { status, messages } = Validation.validationStart( { endpoint: TEST_ENDPOINT, timeout: -1 } )
+            const { status, findings } = Validation.validationStart( { endpoint: TEST_ENDPOINT, timeout: -1 } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-006' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-506', severity: 'error' } ) )
         } )
 
 
         test( 'returns success with valid endpoint', () => {
-            const { status, messages } = Validation.validationStart( { endpoint: TEST_ENDPOINT } )
+            const { status, findings } = Validation.validationStart( { endpoint: TEST_ENDPOINT } )
 
             expect( status ).toBe( true )
-            expect( messages ).toHaveLength( 0 )
+            expect( findings ).toHaveLength( 0 )
         } )
 
 
         test( 'returns success with valid endpoint and timeout', () => {
-            const { status, messages } = Validation.validationStart( { endpoint: TEST_ENDPOINT, timeout: 5000 } )
+            const { status, findings } = Validation.validationStart( { endpoint: TEST_ENDPOINT, timeout: 5000 } )
 
             expect( status ).toBe( true )
-            expect( messages ).toHaveLength( 0 )
+            expect( findings ).toHaveLength( 0 )
+        } )
+
+
+        test( 'emits structured findings with location and message', () => {
+            const { findings } = Validation.validationStart( {} )
+
+            expect( findings[0] ).toEqual( { code: 'VAL-501', severity: 'error', location: 'endpoint', message: 'Missing value' } )
         } )
     } )
 
@@ -91,91 +98,96 @@ describe( 'Validation', () => {
 
 
         test( 'returns error when before is missing', () => {
-            const { status, messages } = Validation.validationCompare( { after: validSnapshot } )
+            const { status, findings } = Validation.validationCompare( { after: validSnapshot } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-010' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-510', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when before is not an object', () => {
-            const { status, messages } = Validation.validationCompare( { before: 'invalid', after: validSnapshot } )
+            const { status, findings } = Validation.validationCompare( { before: 'invalid', after: validSnapshot } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-011' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-511', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when before is null', () => {
-            const { status, messages } = Validation.validationCompare( { before: null, after: validSnapshot } )
+            const { status, findings } = Validation.validationCompare( { before: null, after: validSnapshot } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-011' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-511', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when before is an array', () => {
-            const { status, messages } = Validation.validationCompare( { before: [], after: validSnapshot } )
+            const { status, findings } = Validation.validationCompare( { before: [], after: validSnapshot } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-011' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-511', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when before is missing categories or entries', () => {
-            const { status, messages } = Validation.validationCompare( { before: { foo: true }, after: validSnapshot } )
+            const { status, findings } = Validation.validationCompare( { before: { foo: true }, after: validSnapshot } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-012' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-512', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when after is missing', () => {
-            const { status, messages } = Validation.validationCompare( { before: validSnapshot } )
+            const { status, findings } = Validation.validationCompare( { before: validSnapshot } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-013' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-513', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when after is not an object', () => {
-            const { status, messages } = Validation.validationCompare( { before: validSnapshot, after: 42 } )
+            const { status, findings } = Validation.validationCompare( { before: validSnapshot, after: 42 } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-014' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-514', severity: 'error' } ) )
         } )
 
 
         test( 'returns error when after is missing categories or entries', () => {
-            const { status, messages } = Validation.validationCompare( { before: validSnapshot, after: { foo: true } } )
+            const { status, findings } = Validation.validationCompare( { before: validSnapshot, after: { foo: true } } )
 
             expect( status ).toBe( false )
-            expect( messages ).toContainEqual( expect.stringContaining( 'VAL-015' ) )
+            expect( findings ).toContainEqual( expect.objectContaining( { code: 'VAL-515', severity: 'error' } ) )
         } )
 
 
         test( 'returns success with valid snapshots', () => {
-            const { status, messages } = Validation.validationCompare( { before: validSnapshot, after: validSnapshot } )
+            const { status, findings } = Validation.validationCompare( { before: validSnapshot, after: validSnapshot } )
 
             expect( status ).toBe( true )
-            expect( messages ).toHaveLength( 0 )
+            expect( findings ).toHaveLength( 0 )
         } )
     } )
 
 
     describe( 'error', () => {
 
-        test( 'throws with joined messages', () => {
+        test( 'throws with joined findings', () => {
             expect( () => {
-                Validation.error( { messages: [ 'VAL-001 endpoint: Missing value', 'VAL-005 timeout: Must be a number' ] } )
-            } ).toThrow( 'VAL-001 endpoint: Missing value, VAL-005 timeout: Must be a number' )
+                Validation.error( { findings: [
+                    { code: 'VAL-501', severity: 'error', location: 'endpoint', message: 'Missing value' },
+                    { code: 'VAL-505', severity: 'error', location: 'timeout', message: 'Must be a number' }
+                ] } )
+            } ).toThrow( 'VAL-501 endpoint: Missing value, VAL-505 timeout: Must be a number' )
         } )
 
 
-        test( 'throws with single message', () => {
+        test( 'throws with single finding', () => {
             expect( () => {
-                Validation.error( { messages: [ 'VAL-001 endpoint: Missing value' ] } )
-            } ).toThrow( 'VAL-001 endpoint: Missing value' )
+                Validation.error( { findings: [
+                    { code: 'VAL-501', severity: 'error', location: 'endpoint', message: 'Missing value' }
+                ] } )
+            } ).toThrow( 'VAL-501 endpoint: Missing value' )
         } )
     } )
 } )
